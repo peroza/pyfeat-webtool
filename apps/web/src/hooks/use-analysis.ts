@@ -49,6 +49,7 @@ export function useAnalysis(deps: UseAnalysisDeps) {
   const [job, setJob] = useState<JobResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
+  const pollAbortRef = useRef<AbortController | null>(null);
 
   const revokePreview = useCallback(() => {
     if (previewUrlRef.current) {
@@ -59,11 +60,14 @@ export function useAnalysis(deps: UseAnalysisDeps) {
 
   useEffect(() => {
     return () => {
+      pollAbortRef.current?.abort();
       revokePreview();
     };
   }, [revokePreview]);
 
   const reset = useCallback(() => {
+    pollAbortRef.current?.abort();
+    pollAbortRef.current = null;
     revokePreview();
     setFile(null);
     setPreviewUrl(null);
@@ -106,12 +110,17 @@ export function useAnalysis(deps: UseAnalysisDeps) {
     setJob(null);
     setStatus("submitting");
 
+    pollAbortRef.current?.abort();
+    const pollAbort = new AbortController();
+    pollAbortRef.current = pollAbort;
+
     try {
       const jobId = await deps.submitAnalyze(file);
       setStatus("polling");
       const finishedJob = await pollJob(jobId, {
         getJob: deps.getJob,
         timeoutMs: deps.pollTimeoutMs ?? POLL_TIMEOUT_MS,
+        signal: pollAbort.signal,
       });
       setJob(finishedJob);
 

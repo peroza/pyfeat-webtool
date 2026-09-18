@@ -73,7 +73,8 @@ export function HomePage() {
           </Alert>
         ) : null}
 
-        {status === "failed" ? (
+        {status === "failed" ||
+        (status === "succeeded" && job && !job.result) ? (
           <Button type="button" variant="outline" onClick={reset}>
             Try again
           </Button>
