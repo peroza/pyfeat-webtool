@@ -22,6 +22,8 @@ Typical defaults for `Detectorv2`:
 
 Scores (emotions, AUs, etc.) are passed through as **library-native** values from py-feat; they are not re-normalized by this API.
 
+Uploaded images are decoded with **EXIF orientation applied** (`ImageOps.exif_transpose`) so iPhone photos match what browsers show in `<img>` previews. Before inference, the longest side is capped at `PYFEAT_ANALYSIS_MAX_SIDE` (default **1280**): full-resolution iPhone selfies otherwise make RetinaFace treat each eye as a separate face.
+
 ### First run / model download
 
 The first time you start with the real analyzer, py-feat downloads pretrained weights (Hugging Face / bundled URLs). This can take several minutes and requires network access. Subsequent starts reuse cached weights under your user cache (see py-feat docs).
@@ -36,6 +38,7 @@ All settings use the `PYFEAT_` prefix:
 |----------|---------|-------------|
 | `PYFEAT_USE_STUB_ANALYZER` | `false` | Use `StubAnalyzer` instead of py-feat |
 | `PYFEAT_MAX_UPLOAD_BYTES` | `10485760` (10 MiB) | Max uploaded image size |
+| `PYFEAT_ANALYSIS_MAX_SIDE` | `1280` | Max image long edge before analysis |
 | `PYFEAT_JOB_TTL_SECONDS` | `1200` (20 min) | In-memory job TTL |
 | `PYFEAT_WORKER_POOL_SIZE` | `1` | Thread pool size for analysis workers |
 | `PYFEAT_CORS_ORIGINS` | `http://localhost:3000` | Comma-separated CORS origins |

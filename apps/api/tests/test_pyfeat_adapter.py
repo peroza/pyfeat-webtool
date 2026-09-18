@@ -27,6 +27,33 @@ def test_fex_row_to_face_maps_columns():
     assert face.landmarks == [(5.0, 6.0), (7.0, 8.0)]
 
 
+def test_fex_row_to_face_maps_detector_v2_emotion_names():
+    """Detectorv2 emits Title-Case emotion columns (Happy/Sad/…)."""
+    row = pd.Series(
+        {
+            "FaceRectX": 0.0,
+            "FaceRectY": 0.0,
+            "FaceRectWidth": 10.0,
+            "FaceRectHeight": 10.0,
+            "Neutral": 0.05,
+            "Happy": 0.1,
+            "Sad": 0.7,
+            "Surprise": 0.05,
+            "Fear": 0.02,
+            "Disgust": 0.03,
+            "Anger": 0.05,
+            "AU12": 0.2,
+            "x_0": 1.0,
+            "y_0": 2.0,
+        }
+    )
+    face = fex_row_to_face(row)
+    assert face.emotions["sadness"] == 0.7
+    assert face.emotions["happiness"] == 0.1
+    assert face.emotions["anger"] == 0.05
+    assert "Happy" not in face.emotions
+
+
 def test_analyzer_calls_detector():
     class FakeDetector:
         def detect_image(self, *args, **kwargs):

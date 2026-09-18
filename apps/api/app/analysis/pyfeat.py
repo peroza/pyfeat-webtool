@@ -12,15 +12,20 @@ from PIL import Image
 
 from app.analysis.types import FaceDetection, RawAnalysis
 
-EMOTION_KEYS = (
-    "anger",
-    "disgust",
-    "fear",
-    "happiness",
-    "sadness",
-    "surprise",
-    "neutral",
-)
+# py-feat v1 used lowercase (happiness/sadness); Detectorv2 emits Title Case
+# (Happy/Sad/…). Normalize both to stable API keys for the web UI.
+_EMOTION_CANONICAL: dict[str, str] = {
+    "anger": "anger",
+    "disgust": "disgust",
+    "fear": "fear",
+    "happiness": "happiness",
+    "happy": "happiness",
+    "sadness": "sadness",
+    "sad": "sadness",
+    "surprise": "surprise",
+    "neutral": "neutral",
+    "contempt": "contempt",
+}
 
 _AU_COLUMN_PATTERN = re.compile(r"^AU\d+")
 
@@ -31,12 +36,18 @@ class _PyFeatDetector(Protocol):
     def detect(self, *args: Any, **kwargs: Any) -> pd.DataFrame: ...
 
 
+def _extract_emotions(row: pd.Series) -> dict[str, float]:
+    emotions: dict[str, float] = {}
+    for column in row.index:
+        canonical = _EMOTION_CANONICAL.get(str(column).strip().lower())
+        if canonical is None or pd.isna(row[column]):
+            continue
+        emotions[canonical] = float(row[column])
+    return emotions
+
+
 def fex_row_to_face(row: pd.Series) -> FaceDetection:
-    emotions = {
-        key: float(row[key])
-        for key in EMOTION_KEYS
-        if key in row.index and pd.notna(row[key])
-    }
+    emotions = _extract_emotions(row)
     action_units = {
         str(col): float(row[col])
         for col in row.index

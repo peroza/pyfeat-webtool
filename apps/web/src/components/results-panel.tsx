@@ -43,7 +43,9 @@ export function ResultsPanel({ result, onReset }: ResultsPanelProps) {
         <CardHeader>
           <CardTitle>Landmark overlay</CardTitle>
           <CardDescription>
-            Primary face with landmark points drawn on the image.
+            Cyan box is the detected face; green points are facial landmarks.
+            Large phone photos are downscaled before analysis so the detector
+            sees the whole face.
           </CardDescription>
         </CardHeader>
         <CardContent>

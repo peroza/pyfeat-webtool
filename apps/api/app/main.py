@@ -31,6 +31,7 @@ async def lifespan(app: FastAPI):
         analyzer=analyzer,
         max_upload_bytes=settings.max_upload_bytes,
         pool_size=settings.worker_pool_size,
+        analysis_max_side=settings.analysis_max_side,
     )
     app.state.store = store
     app.state.runner = runner

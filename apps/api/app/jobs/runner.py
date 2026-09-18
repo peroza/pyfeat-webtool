@@ -8,7 +8,7 @@ import numpy as np
 from app.analysis.primary import select_primary_face
 from app.analysis.protocol import FaceAnalyzer
 from app.imaging.overlay import render_landmark_overlay
-from app.imaging.validate import decode_image
+from app.imaging.validate import decode_image, downsample_for_analysis
 from app.jobs.models import JobError, JobStatus
 from app.jobs.store import InMemoryJobStore
 
@@ -22,14 +22,17 @@ class JobRunner:
         analyzer: FaceAnalyzer,
         max_upload_bytes: int,
         pool_size: int = 1,
+        analysis_max_side: int = 1280,
     ) -> None:
         self._store = store
         self._analyzer = analyzer
         self._max_upload_bytes = max_upload_bytes
+        self._analysis_max_side = analysis_max_side
         self._executor = ThreadPoolExecutor(max_workers=pool_size)
 
     def submit(self, image_bytes: bytes) -> str:
         image = decode_image(image_bytes, self._max_upload_bytes)
+        image = downsample_for_analysis(image, self._analysis_max_side)
         job = self._store.create()
         self._executor.submit(self._run, job.id, image)
         return job.id
@@ -47,7 +50,11 @@ class JobRunner:
                     result=None,
                 )
                 return
-            overlay = render_landmark_overlay(image, primary.landmarks)
+            overlay = render_landmark_overlay(
+                image,
+                primary.landmarks,
+                face_bbox=primary.bbox,
+            )
             result = {
                 "face_count": len(raw.faces),
                 "emotions": {k: float(v) for k, v in primary.emotions.items()},
