@@ -14,7 +14,18 @@ from app.settings import get_settings
 async def lifespan(app: FastAPI):
     settings = get_settings()
     store = InMemoryJobStore(ttl_seconds=settings.job_ttl_seconds)
-    analyzer = StubAnalyzer() if settings.use_stub_analyzer else StubAnalyzer()
+    if settings.use_stub_analyzer:
+        analyzer = StubAnalyzer()
+    else:
+        try:
+            from feat import Detector
+        except ImportError:
+            from feat.detector_v2 import Detectorv2 as Detector
+
+        from app.analysis.pyfeat import PyFeatAnalyzer
+
+        detector = Detector()
+        analyzer = PyFeatAnalyzer(detector)
     runner = JobRunner(
         store=store,
         analyzer=analyzer,
