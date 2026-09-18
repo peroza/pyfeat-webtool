@@ -8,7 +8,10 @@ def test_create_and_get_job():
     store = InMemoryJobStore(ttl_seconds=60)
     job = store.create()
     assert job.status == JobStatus.queued
-    assert store.get(job.id) is job
+    snapshot = store.get(job.id)
+    assert snapshot is not None
+    assert snapshot.id == job.id
+    assert snapshot is not job
 
 
 def test_update_status():
@@ -16,6 +19,26 @@ def test_update_status():
     job = store.create()
     store.update(job.id, status=JobStatus.running)
     assert store.get(job.id).status == JobStatus.running
+
+
+def test_get_snapshot_is_immutable_view():
+    store = InMemoryJobStore(ttl_seconds=60)
+    job = store.create()
+    snapshot = store.get(job.id)
+    assert snapshot is not None
+    store.update(job.id, status=JobStatus.running)
+    assert snapshot.status == JobStatus.queued
+
+
+def test_succeeded_update_includes_result_atomically():
+    store = InMemoryJobStore(ttl_seconds=60)
+    job = store.create()
+    result = {"face_count": 1, "emotions": {"happiness": 1.0}}
+    store.update(job.id, status=JobStatus.succeeded, result=result)
+    snapshot = store.get(job.id)
+    assert snapshot is not None
+    assert snapshot.status == JobStatus.succeeded
+    assert snapshot.result == result
 
 
 def test_unknown_job_returns_none():

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import tempfile
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any, Protocol
 
 import numpy as np
@@ -98,20 +99,31 @@ class PyFeatAnalyzer:
     def _run_detector(self, image_rgb: np.ndarray) -> pd.DataFrame:
         detect_image = getattr(self._detector, "detect_image", None)
         if callable(detect_image):
-            return _fex_to_dataframe(detect_image(image_rgb))
+            return self._detect_via_temp_file(
+                image_rgb,
+                lambda path: detect_image(str(path)),
+            )
 
         detect = getattr(self._detector, "detect", None)
         if not callable(detect):
             raise TypeError("Detector must provide detect_image or detect")
 
+        return self._detect_via_temp_file(
+            image_rgb,
+            lambda path: detect(
+                [str(path)],
+                data_type="image",
+                progress_bar=False,
+            ),
+        )
+
+    def _detect_via_temp_file(
+        self,
+        image_rgb: np.ndarray,
+        run_detect: Callable[[Path], Any],
+    ) -> pd.DataFrame:
         temp_path = _write_temp_png(image_rgb)
         try:
-            return _fex_to_dataframe(
-                detect(
-                    [str(temp_path)],
-                    data_type="image",
-                    progress_bar=False,
-                )
-            )
+            return _fex_to_dataframe(run_detect(temp_path))
         finally:
             temp_path.unlink(missing_ok=True)

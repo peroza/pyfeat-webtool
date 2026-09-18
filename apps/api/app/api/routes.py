@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 
+from app.imaging.upload import read_bounded_upload
 from app.imaging.validate import ImageValidationError
+from app.settings import get_settings
 from app.schemas import (
     AnalysisResultSchema,
     AnalyzeAccepted,
@@ -15,7 +17,19 @@ router = APIRouter(prefix="/v1")
 
 @router.post("/analyze", response_model=AnalyzeAccepted, status_code=202)
 async def analyze(request: Request, image: UploadFile = File(...)) -> AnalyzeAccepted:
-    data = await image.read()
+    settings = get_settings()
+    content_length = request.headers.get("content-length")
+    if content_length is not None:
+        try:
+            if int(content_length) > settings.max_upload_bytes:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Upload exceeds maximum size.",
+                )
+        except ValueError:
+            pass
+
+    data = await read_bounded_upload(image, settings.max_upload_bytes)
     runner = request.app.state.runner
     store = request.app.state.store
     store.purge_expired()

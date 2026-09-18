@@ -1,9 +1,19 @@
 from __future__ import annotations
 
+from copy import deepcopy
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from threading import Lock
 
-from app.jobs.models import Job, JobStatus
+from app.jobs.models import Job
+
+
+def _snapshot_job(job: Job) -> Job:
+    return replace(
+        job,
+        error=replace(job.error) if job.error is not None else None,
+        result=deepcopy(job.result) if job.result is not None else None,
+    )
 
 
 class InMemoryJobStore:
@@ -20,7 +30,10 @@ class InMemoryJobStore:
 
     def get(self, job_id: str) -> Job | None:
         with self._lock:
-            return self._jobs.get(job_id)
+            job = self._jobs.get(job_id)
+            if job is None:
+                return None
+            return _snapshot_job(job)
 
     def update(self, job_id: str, **fields: object) -> Job | None:
         with self._lock:
@@ -29,7 +42,7 @@ class InMemoryJobStore:
                 return None
             for key, value in fields.items():
                 setattr(job, key, value)
-            return job
+            return _snapshot_job(job)
 
     def purge_expired(self, now: datetime | None = None) -> None:
         now = now or datetime.now(timezone.utc)

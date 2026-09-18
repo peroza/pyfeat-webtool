@@ -41,6 +41,20 @@ def test_analyze_accepts_image_and_completes(monkeypatch):
         assert result["result"]["overlay_image_base64"]
 
 
+def test_analyze_rejects_oversized_upload(monkeypatch):
+    monkeypatch.setenv("PYFEAT_USE_STUB_ANALYZER", "true")
+    monkeypatch.setenv("PYFEAT_MAX_UPLOAD_BYTES", "1024")
+    from app.settings import get_settings
+
+    get_settings.cache_clear()
+    with api_test_client() as client:
+        response = client.post(
+            "/v1/analyze",
+            files={"image": ("big.png", b"x" * 2048, "image/png")},
+        )
+        assert response.status_code == 400
+
+
 def test_analyze_rejects_garbage(monkeypatch):
     monkeypatch.setenv("PYFEAT_USE_STUB_ANALYZER", "true")
     from app.settings import get_settings

@@ -48,3 +48,30 @@ def test_analyzer_calls_detector():
     analyzer = PyFeatAnalyzer(FakeDetector())
     raw = analyzer.analyze(np.zeros((20, 20, 3), dtype=np.uint8))
     assert len(raw.faces) == 1
+
+
+def test_analyzer_uses_detect_when_no_detect_image():
+    class FakeDetector:
+        def detect(self, paths, data_type="image", progress_bar=False):
+            assert data_type == "image"
+            assert progress_bar is False
+            assert len(paths) == 1
+            assert paths[0].endswith(".png")
+            return pd.DataFrame(
+                [
+                    {
+                        "FaceRectX": 0,
+                        "FaceRectY": 0,
+                        "FaceRectWidth": 10,
+                        "FaceRectHeight": 10,
+                        "happiness": 1.0,
+                        "AU01": 0.2,
+                        "x_0": 1.0,
+                        "y_0": 2.0,
+                    }
+                ]
+            )
+
+    analyzer = PyFeatAnalyzer(FakeDetector())
+    raw = analyzer.analyze(np.zeros((20, 20, 3), dtype=np.uint8))
+    assert len(raw.faces) == 1
