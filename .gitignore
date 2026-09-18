@@ -1,0 +1,10 @@
+.superpowers/
+*.egg-info/
+node_modules/
+.next/
+__pycache__/
+.venv/
+*.pyc
+.env
+dist/
+.DS_Store

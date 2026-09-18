@@ -1,0 +1,54 @@
+from datetime import datetime, timedelta, timezone
+
+from app.jobs.models import JobStatus
+from app.jobs.store import InMemoryJobStore
+
+
+def test_create_and_get_job():
+    store = InMemoryJobStore(ttl_seconds=60)
+    job = store.create()
+    assert job.status == JobStatus.queued
+    snapshot = store.get(job.id)
+    assert snapshot is not None
+    assert snapshot.id == job.id
+    assert snapshot is not job
+
+
+def test_update_status():
+    store = InMemoryJobStore(ttl_seconds=60)
+    job = store.create()
+    store.update(job.id, status=JobStatus.running)
+    assert store.get(job.id).status == JobStatus.running
+
+
+def test_get_snapshot_is_immutable_view():
+    store = InMemoryJobStore(ttl_seconds=60)
+    job = store.create()
+    snapshot = store.get(job.id)
+    assert snapshot is not None
+    store.update(job.id, status=JobStatus.running)
+    assert snapshot.status == JobStatus.queued
+
+
+def test_succeeded_update_includes_result_atomically():
+    store = InMemoryJobStore(ttl_seconds=60)
+    job = store.create()
+    result = {"face_count": 1, "emotions": {"happiness": 1.0}}
+    store.update(job.id, status=JobStatus.succeeded, result=result)
+    snapshot = store.get(job.id)
+    assert snapshot is not None
+    assert snapshot.status == JobStatus.succeeded
+    assert snapshot.result == result
+
+
+def test_unknown_job_returns_none():
+    store = InMemoryJobStore(ttl_seconds=60)
+    assert store.get("missing") is None
+
+
+def test_purge_expired_removes_old_jobs():
+    store = InMemoryJobStore(ttl_seconds=10)
+    job = store.create()
+    job.created_at = datetime.now(timezone.utc) - timedelta(seconds=30)
+    store.purge_expired(datetime.now(timezone.utc))
+    assert store.get(job.id) is None
