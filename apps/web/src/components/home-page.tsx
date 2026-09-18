@@ -32,17 +32,27 @@ export function HomePage() {
     status === "submitting" || status === "polling" || status === "succeeded";
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-10 px-6 py-16">
-      <header className="flex flex-col items-center gap-3 text-center">
-        <h1 className="font-heading text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+    <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-10 px-6 py-16 sm:py-20">
+      <header className="animate-fade-up flex flex-col items-center gap-4 text-center">
+        <h1 className="font-heading text-5xl tracking-tight text-foreground sm:text-6xl">
           Py-FEAT
         </h1>
-        <p className="max-w-md text-base text-muted-foreground sm:text-lg">
+        <div
+          aria-hidden
+          className="h-px w-16 bg-gradient-to-r from-transparent via-primary/60 to-transparent"
+        />
+        <p
+          className="animate-fade-up max-w-md text-base text-muted-foreground sm:text-lg"
+          style={{ animationDelay: "120ms" }}
+        >
           Upload a face photo to analyze emotions, action units, and landmarks.
         </p>
       </header>
 
-      <div className="flex w-full flex-col items-center gap-6">
+      <div
+        className="animate-fade-up flex w-full flex-col items-center gap-6"
+        style={{ animationDelay: "220ms" }}
+      >
         <ImageUpload
           status={status}
           previewUrl={previewUrl}

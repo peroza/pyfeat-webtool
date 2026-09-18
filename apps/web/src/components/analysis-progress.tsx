@@ -21,12 +21,16 @@ export function AnalysisProgress({ status }: AnalysisProgressProps) {
 
   return (
     <div
-      className="flex w-full max-w-lg flex-col gap-2"
+      className="animate-fade-in flex w-full max-w-lg flex-col gap-2"
       role="status"
       aria-live="polite"
     >
       <p className="text-sm text-muted-foreground">{label}</p>
-      <Progress value={status === "submitting" ? 35 : 70} />
+      <Progress
+        value={status === "submitting" ? 35 : 70}
+        className="h-1.5"
+        indicatorClassName="bg-primary/90"
+      />
     </div>
   );
 }

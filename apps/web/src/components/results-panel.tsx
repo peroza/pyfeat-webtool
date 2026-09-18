@@ -28,7 +28,7 @@ export function ResultsPanel({ result, onReset }: ResultsPanelProps) {
   const landmarkCount = result.landmarks.length;
 
   return (
-    <div className="flex w-full max-w-lg flex-col gap-6">
+    <div className="animate-fade-up flex w-full max-w-lg flex-col gap-6">
       {result.face_count > 1 ? (
         <Alert>
           <AlertTitle>Multiple faces detected</AlertTitle>
