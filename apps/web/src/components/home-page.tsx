@@ -2,6 +2,7 @@
 
 import { AnalysisProgress } from "@/components/analysis-progress";
 import { ImageUpload } from "@/components/image-upload";
+import { ResultsPanel } from "@/components/results-panel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,19 +60,17 @@ export function HomePage() {
           </Alert>
         ) : null}
 
-        {status === "succeeded" && job ? (
-          <div className="flex w-full max-w-lg flex-col items-center gap-4 rounded-lg border border-border bg-muted/20 px-4 py-6 text-center">
-            <p className="text-sm font-medium text-foreground">
-              Analysis complete
-              {job.result ? ` — ${job.result.face_count} face(s) detected` : ""}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Detailed results will appear here in the next update.
-            </p>
-            <Button type="button" variant="outline" onClick={reset}>
-              Analyze another image
-            </Button>
-          </div>
+        {status === "succeeded" && job?.result ? (
+          <ResultsPanel result={job.result} onReset={reset} />
+        ) : null}
+
+        {status === "succeeded" && job && !job.result ? (
+          <Alert className="max-w-lg">
+            <AlertTitle>Analysis complete</AlertTitle>
+            <AlertDescription>
+              No result payload was returned. Try analyzing again.
+            </AlertDescription>
+          </Alert>
         ) : null}
 
         {status === "failed" ? (
