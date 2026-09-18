@@ -1,0 +1,17 @@
+services:
+  api:
+    build: ./apps/api
+    ports:
+      - "8000:8000"
+    environment:
+      PYFEAT_CORS_ORIGINS: http://localhost:3000
+      # PYFEAT_USE_STUB_ANALYZER: "true"  # uncomment for UI-only work
+  web:
+    build:
+      context: ./apps/web
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
